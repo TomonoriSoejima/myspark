@@ -29,8 +29,6 @@ public class HelloElastic {
 
 
     static final String index_name = "hotel";
-    static final String type_name = "data";
-
 
 
     static final RestHighLevelClient client = new RestHighLevelClient(
@@ -72,7 +70,7 @@ public class HelloElastic {
 
         int i = 1;
         for (Hotel hotel : list) {
-            String header = "{\"index\":{\"_index\":\"" + index_name +  "\",\"_type\":\"" + type_name  + "\",\"_id\":" + i +"}} " + "\n";
+            String header = "{\"index\":{\"_index\":\"" + index_name + "\",\"_id\":" + i +"}} " + "\n";
             sb.append(header);
             String json = mapper.writeValueAsString(hotel);
             sb.append(json + "\n");
@@ -167,7 +165,7 @@ public class HelloElastic {
                 Map<String, Object> map = mapper.convertValue(hotel, Map.class);
 
                 String id_str = Integer.toString(i);
-                IndexRequest request = new IndexRequest(index_name, type_name, id_str)
+                IndexRequest request = new IndexRequest(index_name, id_str)
                         .source(map);
 
                 bulkRequest.add(request);
