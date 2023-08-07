@@ -1,7 +1,7 @@
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-class Hotel{
+public class Hotel{
     int star;
     int price;
     int capacity;
@@ -13,7 +13,7 @@ class Hotel{
     String created;
     String has_parking;
     List<String> menu;
-    List<String> cloesd;
+    List<String> closed;
 
 
 
@@ -35,7 +35,7 @@ class Hotel{
         this.created = created;
         this.has_parking = has_parking;
         this.menu = menu;
-        this.cloesd = closed;
+        this.closed = closed;
 
     }
 
@@ -99,6 +99,103 @@ class Hotel{
 
 
 
+        // getters
+        public int getStar() {
+            return star;
+        }
+
+        public int getPrice() {
+            return price;
+        }
+
+        public int getCapacity() {
+            return capacity;
+        }
+
+        public String getHotel_name() {
+            return hotel_name;
+        }
+
+        public String getGroup() {
+            return group;
+        }
+
+        public String getCountry() {
+            return country;
+        }
+
+        public String getCity() {
+            return city;
+        }
+
+        public String getBusy_month() {
+            return busy_month;
+        }
+
+        public String getCreated() {
+            return created;
+        }
+
+        public String getHas_parking() {
+            return has_parking;
+        }
+
+        public List<String> getMenu() {
+            return menu;
+        }
+
+        public List<String> getClosed() {
+            return closed;
+        }
+
+        // setters
+        public void setStar(int star) {
+            this.star = star;
+        }
+
+        public void setPrice(int price) {
+            this.price = price;
+        }
+
+        public void setCapacity(int capacity) {
+            this.capacity = capacity;
+        }
+
+        public void setHotel_name(String hotel_name) {
+            this.hotel_name = hotel_name;
+        }
+
+        public void setGroup(String group) {
+            this.group = group;
+        }
+
+        public void setCountry(String country) {
+            this.country = country;
+        }
+
+        public void setCity(String city) {
+            this.city = city;
+        }
+
+        public void setBusy_month(String busy_month) {
+            this.busy_month = busy_month;
+        }
+
+        public void setCreated(String created) {
+            this.created = created;
+        }
+
+        public void setHas_parking(String has_parking) {
+            this.has_parking = has_parking;
+        }
+
+        public void setMenu(List<String> menu) {
+            this.menu = menu;
+        }
+
+        public void setClosed(List<String> closed) {
+            this.closed = closed;
+        }
 
 
 }

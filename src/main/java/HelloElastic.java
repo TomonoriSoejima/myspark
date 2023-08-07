@@ -1,49 +1,48 @@
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.elasticsearch.client.RestClient;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
-import org.apache.http.message.BasicHeader;
-import org.elasticsearch.action.DocWriteRequest;
-import org.elasticsearch.action.DocWriteResponse;
-import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.update.UpdateResponse;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
 
 import java.awt.*;
 import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 
-import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
+import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static spark.Spark.get;
 
 public class HelloElastic {
 
 
-    static final String index_name = "hotel";
+    static String index_name = "hotel";
+    static String serverUrl = "http://localhost:9200";
+    static RestClient restClient = RestClient
+            .builder(HttpHost.create(serverUrl))
+            .setDefaultHeaders(new Header[]{
+            })
+            .build();
+
+    // Create the transport with a Jackson mapper
+    static ElasticsearchTransport transport = new RestClientTransport(
+            restClient, new JacksonJsonpMapper());
 
 
-    static final RestHighLevelClient client = new RestHighLevelClient(
-            RestClient.builder(
-                    new HttpHost("localhost", 9200, "http"),
-                    new HttpHost("localhost", 9201, "http"),
-                    new HttpHost("localhost", 9202, "http"),
-                    new HttpHost("localhost", 9203, "http")));
 
+    // And create the API client
+    static ElasticsearchClient esClient = new ElasticsearchClient(transport);
 
 
     public static void main(String[] args) throws Exception {
-
-
-
+        
 
         Desktop desktop = Desktop.getDesktop();
         desktop.browse(new URL("http://localhost:4567/readme").toURI());
@@ -63,34 +62,31 @@ public class HelloElastic {
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-
-
+        
         List<Hotel> list = HelloElastic.getHotels(interval, numbers);
-
-
+        
         int i = 1;
         for (Hotel hotel : list) {
             String header = "{\"index\":{\"_index\":\"" + index_name + "\",\"_id\":" + i +"}} " + "\n";
             sb.append(header);
             String json = mapper.writeValueAsString(hotel);
-            sb.append(json + "\n");
+            sb.append(json).append("\n");
             i++;
         }
-
-
+        
         String home = System.getProperty("user.home");
-        File fileName = new File(home+"/Downloads/" + "data" + ".json");
+        File fileName = new File(home + "/Downloads/" + "data" + ".json");
         BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
         writer.write(sb.toString());
 
         writer.close();
 
-        StringBuilder response = new StringBuilder();
-        response.append("data.json is saved : " + fileName.toString() + "<br>");
-        response.append("<br>");
-        response.append("you can invoke bulk as below<br>");
-        response.append("curl  -H 'Content-Type: application/x-ndjson' -XPOST 'localhost:9200/_bulk?pretty' --data-binary @" + fileName.toString());
-        return response.toString();
+        String response;
+        response = "data.json is saved : " + fileName.toString() + "<br>" +
+                "<br>" +
+                "you can invoke bulk as below<br>" +
+                "curl  -H 'Content-Type: application/x-ndjson' -XPOST 'localhost:9200/_bulk?pretty' --data-binary @" + fileName.toString();
+        return response;
 
     }
 
@@ -102,14 +98,14 @@ public class HelloElastic {
         if ( in == null )
             throw new Exception("resource not found: " + resource_path);
 
-        Reader reader = new InputStreamReader(in, "utf-8");
+        Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8);
 
         BufferedReader bufferedReader = new BufferedReader(reader);
 
 
         String line;
         while ((line = bufferedReader.readLine()) != null) {
-            sb.append(escapeHtml4(line ) + "<br>");
+            sb.append(escapeHtml4(line)).append("<br>");
         }
 
         return sb.toString();
@@ -118,8 +114,8 @@ public class HelloElastic {
 
     private static List<Hotel> getHotels(String interval, String numbers) {
         int number = Integer.parseInt(numbers);
-
-
+        
+//        Helper.INTERVAL inter = null;
         Helper.INTERVAL inter = null;
         switch(interval) {
             case "s" :
@@ -137,62 +133,29 @@ public class HelloElastic {
             case "d" :
                 inter = Helper.INTERVAL.DAILY;
                 break;
-            default : // Optional
-                inter = Helper.INTERVAL.SECONDLY;
         }
 
-        List<Hotel> list = Hotel.make_hotels(number, inter);
-        return list;
+        return Hotel.make_hotels(number, inter);
 
     }
 
     public static String bulk(String interval, String numbers) throws Exception {
+        
+        List<Hotel> hotels = HelloElastic.getHotels(interval, numbers);
+        BulkRequest.Builder br = new BulkRequest.Builder();
 
-
-        Header header = new BasicHeader("a", "a");
-
-
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-
-
-        int i = 1;
-        List<Hotel> list = HelloElastic.getHotels(interval, numbers);
-
-        try {
-            BulkRequest bulkRequest = new BulkRequest();
-            for (Hotel hotel : list) {
-                Map<String, Object> map = mapper.convertValue(hotel, Map.class);
-
-                String id_str = Integer.toString(i);
-                IndexRequest request = new IndexRequest(index_name, id_str)
-                        .source(map);
-
-                bulkRequest.add(request);
-                i++;
-
-            }
-
-
-            BulkResponse bulkResponse = client.bulk(bulkRequest, header);
-
-
-            for (BulkItemResponse bulkItemResponse : bulkResponse) {
-                DocWriteResponse itemResponse = bulkItemResponse.getResponse();
-
-                if (bulkItemResponse.getOpType() == DocWriteRequest.OpType.INDEX
-                        || bulkItemResponse.getOpType() == DocWriteRequest.OpType.CREATE) {
-                    IndexResponse indexResponse = (IndexResponse) itemResponse;
-                }
-
-            }
-
-
-        } catch (Exception e)
-        {
-            return "error";
+        for (Hotel hotel : hotels) {
+            br.operations(op -> op
+                    .index(idx -> idx
+                            .index(index_name)
+                            .id(hotel.getHotel_name())
+                            .document(hotel)
+                    )
+            );
+            
         }
-
+        
+        BulkResponse result = esClient.bulk(br.build());
         return "done";
     }
 }
