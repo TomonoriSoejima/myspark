@@ -20,7 +20,7 @@ import java.util.List;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static spark.Spark.get;
 
-public class HelloElastic {
+public class MySpark {
 
 
     static String index_name = "hotel";
@@ -63,10 +63,10 @@ public class HelloElastic {
         ObjectMapper mapper = new ObjectMapper();
         mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
         
-        List<Hotel> list = HelloElastic.getHotels(interval, numbers);
+        List<Hotel> hotels = MySpark.getHotels(interval, numbers);
         
         int i = 1;
-        for (Hotel hotel : list) {
+        for (Hotel hotel : hotels) {
             String header = "{\"index\":{\"_index\":\"" + index_name + "\",\"_id\":" + i +"}} " + "\n";
             sb.append(header);
             String json = mapper.writeValueAsString(hotel);
@@ -94,7 +94,7 @@ public class HelloElastic {
     public static String readme() throws Exception {
         StringBuilder sb = new StringBuilder();
         String resource_path = "/readme.txt";
-        InputStream in = HelloElastic.class.getResourceAsStream(resource_path);
+        InputStream in = MySpark.class.getResourceAsStream(resource_path);
         if ( in == null )
             throw new Exception("resource not found: " + resource_path);
 
@@ -141,7 +141,7 @@ public class HelloElastic {
 
     public static String bulk(String interval, String numbers) throws Exception {
         
-        List<Hotel> hotels = HelloElastic.getHotels(interval, numbers);
+        List<Hotel> hotels = MySpark.getHotels(interval, numbers);
         BulkRequest.Builder br = new BulkRequest.Builder();
 
         for (Hotel hotel : hotels) {
