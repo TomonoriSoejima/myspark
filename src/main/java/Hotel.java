@@ -10,7 +10,7 @@ public class Hotel{
     String country;
     String city;
     String busy_month;
-    String created;
+    String timestamp;
     String has_parking;
     List<String> menu;
     List<String> closed;
@@ -20,7 +20,7 @@ public class Hotel{
     public Hotel (int star, int price, int capacity,
                  String hotel_name, String group, String country,
                  String city, String busy_month,
-                 String created, String has_parking,
+                 String timestamp, String has_parking,
                  List<String> menu, List<String> closed
                  )
     {
@@ -32,7 +32,7 @@ public class Hotel{
         this.country = country;
         this.city = city;
         this.busy_month = busy_month;
-        this.created = created;
+        this.timestamp = timestamp;
         this.has_parking = has_parking;
         this.menu = menu;
         this.closed = closed;
@@ -57,10 +57,10 @@ public class Hotel{
             String busy_month = RandomData.Month.randomMonth().toString();
 
             seconds = Helper.setTimeOffset(seconds, interval);
-            Date created = new Date(seconds*1000L);
+            Date timestamp = new Date(seconds*1000L);
 
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-            String created_string = dateFormat.format(created);
+            String timestamp_string = dateFormat.format(timestamp);
 
 
             String has_parking = i % 2 == 0 ? "yes" : "no";
@@ -68,7 +68,7 @@ public class Hotel{
             List<String> closed = Hotel.setCloesd();
 
             Hotel hotel = new Hotel(star, price, capacity, hotel_name, group, country, city,
-                    busy_month, created_string, has_parking,menus, closed);
+                    busy_month, timestamp_string, has_parking,menus, closed);
 
             hotels.add(hotel);
 
@@ -132,8 +132,8 @@ public class Hotel{
             return busy_month;
         }
 
-        public String getCreated() {
-            return created;
+        public String getTimestamp() {
+            return timestamp;
         }
 
         public String getHas_parking() {
@@ -181,8 +181,8 @@ public class Hotel{
             this.busy_month = busy_month;
         }
 
-        public void setCreated(String created) {
-            this.created = created;
+        public void setTimestamp(String timestamp) {
+            this.timestamp = timestamp;
         }
 
         public void setHas_parking(String has_parking) {

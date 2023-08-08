@@ -42,7 +42,9 @@ public class MySpark {
 
 
     public static void main(String[] args) throws Exception {
-        
+
+
+        create("s","5");
 
         Desktop desktop = Desktop.getDesktop();
         desktop.browse(new URL("http://localhost:4567/readme").toURI());
