@@ -1,6 +1,7 @@
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -17,11 +18,16 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static spark.Spark.get;
 
 public class MySpark {
 
+
+    private static final Logger logger = LoggerFactory.getLogger(MySpark.class);
 
     static String index_name = "hotel";
     static String serverUrl = "http://localhost:9200";
@@ -156,8 +162,18 @@ public class MySpark {
             );
             
         }
-        
+        logger.info("This is an info message");
+
         BulkResponse result = esClient.bulk(br.build());
+
+        if (result.errors()) {
+            logger.error("Bulk had errors");
+            for (BulkResponseItem item: result.items()) {
+                if (item.error() != null) {
+                    logger.error(item.error().reason());
+                }
+            }
+        }
         return "done";
     }
 }
