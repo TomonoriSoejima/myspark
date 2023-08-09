@@ -14,7 +14,7 @@ import org.apache.http.HttpHost;
 
 import java.awt.*;
 import java.io.*;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -25,7 +25,6 @@ import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static spark.Spark.get;
 
 public class MySpark {
-
 
     private static final Logger logger = LoggerFactory.getLogger(MySpark.class);
 
@@ -42,19 +41,13 @@ public class MySpark {
             restClient, new JacksonJsonpMapper());
 
 
-
     // And create the API client
     static ElasticsearchClient esClient = new ElasticsearchClient(transport);
 
+    public static void main(String[] args)  {
 
-    public static void main(String[] args) throws Exception {
 
-
-        create("s","5");
-
-        Desktop desktop = Desktop.getDesktop();
-        desktop.browse(new URL("http://localhost:4567/readme").toURI());
-
+        openWebpage("http://localhost:4567/readme");
         get("/readme", (req, res) -> readme());
 
         get("/create/:interval/:how_many", (request, response) -> create(request.params("interval"), request.params("how_many")));
@@ -64,6 +57,23 @@ public class MySpark {
     }
 
 
+    public static void openWebpage(String urlString) {
+        try {
+            URI uri = new URI(urlString);
+
+            // Check if Desktop is supported
+            if (Desktop.isDesktopSupported()) {
+                Desktop desktop = Desktop.getDesktop();
+
+                // Check if BROWSE action is supported
+                if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                    desktop.browse(uri);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();  // Handle the exception appropriately for your application
+        }
+    }
     public static String create(String interval, String numbers) throws Exception {
 
         StringBuilder sb = new StringBuilder();
@@ -90,10 +100,10 @@ public class MySpark {
         writer.close();
 
         String response;
-        response = "data.json is saved : " + fileName.toString() + "<br>" +
+        response = "data.json is saved : " + fileName + "<br>" +
                 "<br>" +
                 "you can invoke bulk as below<br>" +
-                "curl  -H 'Content-Type: application/x-ndjson' -XPOST 'localhost:9200/_bulk?pretty' --data-binary @" + fileName.toString();
+                "curl  -H 'Content-Type: application/x-ndjson' -XPOST 'localhost:9200/_bulk?pretty' --data-binary @" + fileName;
         return response;
 
     }
@@ -109,7 +119,6 @@ public class MySpark {
         Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8);
 
         BufferedReader bufferedReader = new BufferedReader(reader);
-
 
         String line;
         while ((line = bufferedReader.readLine()) != null) {
@@ -162,7 +171,6 @@ public class MySpark {
             );
             
         }
-        logger.info("This is an info message");
 
         BulkResponse result = esClient.bulk(br.build());
 
