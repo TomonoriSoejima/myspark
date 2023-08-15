@@ -93,7 +93,7 @@ public class MySpark {
         }
         
         String home = System.getProperty("user.home");
-        File fileName = new File(home + "/Downloads/" + "data" + ".json");
+        File fileName = new File(home + "/" + "data" + ".json");
         BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
         writer.write(sb.toString());
 
