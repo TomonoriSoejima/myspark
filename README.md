@@ -1,6 +1,6 @@
 ## myspark
 
-This tool creats a json file that you can use for bulk inserts to your local elasitcsearch.
+This tool creats a json file that you can use for bulk inserts to your local Elasticsearch.
 The data will come with timestamp that you can use for building histogram aggregation with different intervals you like.
 The data is comprised of mocked hotels.
 
