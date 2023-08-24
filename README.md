@@ -38,6 +38,7 @@ It takes only 3 parameters
 
 `http://localhost:4567/create/m/5000`
 * this api will create a bulkable json file with 5000 documents.
+* the file is stored in $USER directory
 
 
 
