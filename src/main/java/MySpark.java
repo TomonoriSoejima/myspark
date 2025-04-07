@@ -18,22 +18,42 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static spark.Spark.get;
+import static spark.Spark.port;
 
 public class MySpark {
 
-    private static final Logger logger = LoggerFactory.getLogger(MySpark.class);
+    private static final Logger logger = Logger.getLogger(MySpark.class.getName());
 
     static String index_name = "hotel";
-    static String serverUrl = "http://localhost:9200";
+    static String serverUrl;
+
+    static {
+        // Determine the Elasticsearch server URL
+        if (isRunningInContainer()) {
+            serverUrl = System.getenv().getOrDefault("ELASTICSEARCH_URL", "http://host.docker.internal:9200");
+            logger.info("Running inside a container. Using server URL: " + serverUrl);
+        } else {
+            serverUrl = System.getenv().getOrDefault("ELASTICSEARCH_URL", "http://localhost:9200");
+            logger.info("Running outside a container. Using server URL: " + serverUrl);
+        }
+
+        // Load java.util.logging configuration
+        try (InputStream configFile = MySpark.class.getResourceAsStream("/logging.properties")) {
+            java.util.logging.LogManager.getLogManager().readConfiguration(configFile);
+        } catch (IOException e) {
+            System.err.println("Could not load logging configuration: " + e.getMessage());
+        }
+        logger.info("Attempting to connect to Elasticsearch at: " + serverUrl);
+    }
+
     static RestClient restClient = RestClient
             .builder(HttpHost.create(serverUrl))
-            .setDefaultHeaders(new Header[]{
-            })
+            .setDefaultHeaders(new Header[]{})
             .build();
 
     // Create the transport with a Jackson mapper
@@ -45,9 +65,15 @@ public class MySpark {
     static ElasticsearchClient esClient = new ElasticsearchClient(transport);
 
     public static void main(String[] args)  {
+        logger.info("Starting application...");
+        logger.info("Elasticsearch server URL: " + serverUrl); // Explicitly log the server URL
 
+        // Set the port for Spark
+        int sparkPort = Integer.parseInt(System.getenv().getOrDefault("SPARK_PORT", "4567"));
+        port(sparkPort);
+        logger.info("Spark server running on port: " + sparkPort);
 
-        openWebpage("http://localhost:4567/readme");
+        openWebpage("http://localhost:" + sparkPort + "/readme");
         get("/readme", (req, res) -> readme());
 
         get("/create/:interval/:how_many", (request, response) -> create(request.params("interval"), request.params("how_many")));
@@ -58,9 +84,25 @@ public class MySpark {
 
 
     public static void openWebpage(String urlString) {
-        System.out.println("Application is running in headless mode. Open " + urlString + " in your browser.");
+        try {
+            URI uri = new URI(urlString);
+
+            // Check if Desktop is supported
+            if (Desktop.isDesktopSupported()) {
+                Desktop desktop = Desktop.getDesktop();
+
+                // Check if BROWSE action is supported
+                if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                    desktop.browse(uri);
+                }
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to open webpage: " + urlString, e);
+        }
     }
     public static String create(String interval, String numbers) throws Exception {
+
+        logger.info("Creating data with interval: " + interval + " and numbers: " + numbers);
 
         StringBuilder sb = new StringBuilder();
 
@@ -144,6 +186,8 @@ public class MySpark {
 
     public static String bulk(String interval, String numbers) throws Exception {
         
+        logger.info("Performing bulk operation with interval: " + interval + " and numbers: " + numbers);
+
         List<Hotel> hotels = MySpark.getHotels(interval, numbers);
         BulkRequest.Builder br = new BulkRequest.Builder();
 
@@ -161,13 +205,23 @@ public class MySpark {
         BulkResponse result = esClient.bulk(br.build());
 
         if (result.errors()) {
-            logger.error("Bulk had errors");
+            logger.severe("Bulk had errors");
             for (BulkResponseItem item: result.items()) {
                 if (item.error() != null) {
-                    logger.error(item.error().reason());
+                    logger.severe(item.error().reason());
                 }
             }
         }
         return "done";
+    }
+
+    private static boolean isRunningInContainer() {
+        File cgroupFile = new File("/proc/1/cgroup");
+        if (cgroupFile.exists()) {
+            logger.info("Detected container environment based on the existence of /proc/1/cgroup.");
+            return true;
+        }
+        logger.info("No container environment detected.");
+        return false;
     }
 }
