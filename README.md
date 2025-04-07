@@ -1,6 +1,4 @@
-Here's a cleaner, more polished version of your `README.md` with improved structure, clarity, grammar, and added code formatting. I’ve also included the shell script as a usage example:
 
----
 
 ## myspark
 
