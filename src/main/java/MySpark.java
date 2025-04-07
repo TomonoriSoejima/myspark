@@ -58,21 +58,7 @@ public class MySpark {
 
 
     public static void openWebpage(String urlString) {
-        try {
-            URI uri = new URI(urlString);
-
-            // Check if Desktop is supported
-            if (Desktop.isDesktopSupported()) {
-                Desktop desktop = Desktop.getDesktop();
-
-                // Check if BROWSE action is supported
-                if (desktop.isSupported(Desktop.Action.BROWSE)) {
-                    desktop.browse(uri);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();  // Handle the exception appropriately for your application
-        }
+        System.out.println("Application is running in headless mode. Open " + urlString + " in your browser.");
     }
     public static String create(String interval, String numbers) throws Exception {
 
