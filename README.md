@@ -1,62 +1,112 @@
+Here's a cleaner, more polished version of your `README.md` with improved structure, clarity, grammar, and added code formatting. I’ve also included the shell script as a usage example:
+
+---
+
 ## myspark
 
-This tool creats a json file that you can use for bulk inserts to your local elasitcsearch.
-The data will come with timestamp that you can use for building histogram aggregation with different intervals you like.
-The data is comprised of mocked hotels.
+**myspark** is a simple tool for generating mock hotel data in JSON format, suitable for bulk insertion into your local Elasticsearch instance.  
+Each document includes a timestamp, making it ideal for time-based visualizations such as histogram aggregations.
 
+---
 
-## Run Requirements
-* JDK - Oracle or OpenJDK, 1.8.0 or higher.
+## Features
+
+- Create a JSON file for bulk Elasticsearch inserts  
+- Send mock data directly to Elasticsearch (if security is disabled)  
+- Customizable timestamps for testing time-series queries  
+- Lightweight web UI to trigger actions
+
+---
+
+## Requirements
+
+- JDK 1.8.0 or higher (Oracle JDK or OpenJDK)
+
+---
 
 ## Installation
 
+1. Download the latest [myspark JAR](https://github.com/TomonoriSoejima/myspark/releases/download/v1.0.1/myspark.jar)
+2. Run it via double-click or from the command line:
 
-You can download this [jar](https://github.com/TomonoriSoejima/myspark/releases/download/v1.0.1/myspark.jar).
-Then you can start it simply by double-clicking the jar or `java -jar myspark.jar` from your terminal.
-That would fire up your default browser and open the web UI.
+```bash
+java -jar myspark.jar
+```
 
-## Usage - Simplest Case
+This launches a lightweight web server and opens the UI in your default browser.
 
-Just hit `http://localhost:4567/<action>/<interval>/<counts>`
+---
 
-It takes only 3 parameters
+## Usage
 
-**1. action -  `create` or `bulk`**
+### REST API
 
-**2. interval - interval you want.**
+```
+http://localhost:4567/<action>/<interval>/<count>
+```
 
+- **action**:  
+  - `create`: generates a JSON file with mocked documents  
+  - `bulk`: sends the documents directly to your local Elasticsearch
 
-* s : secondly
-* m : minutely
-* h : hourly
-* d : daily
+- **interval**:  
+  Timestamp interval for each document  
+  - `s`: seconds  
+  - `m`: minutes  
+  - `h`: hours  
+  - `d`: days  
 
+- **count**:  
+  Number of documents to generate
 
-**3. count - how many doc you want.**
+---
 
-#### Basic Usage Examples
+### Examples
 
-`http://localhost:4567/create/m/5000`
-* this api will create a bulkable json file with 5000 documents.
-* the file is stored in $USER directory
+#### Generate 5,000 documents with 1-minute intervals:
+```bash
+curl http://localhost:4567/create/m/5000
+```
+- This creates a bulkable JSON file in your `$HOME` directory.
 
+#### Send 3,600 daily-interval documents directly to Elasticsearch:
+```bash
+curl http://localhost:4567/bulk/d/3600
+```
 
+> Note: Direct bulk insertion only works if Elasticsearch security is disabled (`xpack.security.enabled: false` in `elasticsearch.yml`).
 
-`http://localhost:4567/bulk/d/3600`
+---
 
-* this api will send documents straight to your elasticsearch.
+## Sample Startup Script
 
-This only works if you have disabled security in your elasticsearch.yml though.
-`xpack.security.enabled: false`
+Here’s a helper script to run the tool and automatically trigger a create action:
 
-* You can also consume them from curl if you like.
+```bash
+#!/bin/bash
 
-`curl http://localhost:4567/bulk/h/10`
+export JAVA_HOME="/Users/surfer/elastic/labs/7.17.4/elasticsearch/jdk.app/Contents/Home"
 
+# Check if myspark is already running
+jps | grep myspark.jar > /dev/null
 
+if [ $? != 0 ]; then
+    java -jar myspark.jar &
+    sleep 2
+fi
 
+# Trigger data generation
+curl http://localhost:4567/create/h/$1
+```
 
+Save this as `do_it.sh`, make it executable with `chmod +x do_it.sh`, and run:
 
+```bash
+./do_it.sh 1000
+```
 
+This example creates 1,000 documents with hourly timestamps.
 
+---
 
+Let me know if you'd like to add more advanced examples (like Kibana visualizations or `bulk` curl-based replays).
